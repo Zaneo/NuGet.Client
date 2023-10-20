@@ -58,10 +58,19 @@ namespace NuGet.Commands
                 && !sourceUri.IsFile
                 && sourceUri.IsAbsoluteUri)
             {
-                symbolPackageUpdateResource = await CommandRunnerUtility.GetSymbolPackageUpdateResource(sourceProvider, source);
-                if (symbolPackageUpdateResource != null)
+                // An 'http' PackageSource ending in '.json' is considered to be V3
+                if (packageSource.ProtocolVersion == 3 || 
+                    (packageSource.IsHttp && packageSource.Source.EndsWith(".json", StringComparison.OrdinalIgnoreCase)))
                 {
-                    symbolSource = symbolPackageUpdateResource.SourceUri.AbsoluteUri;
+                    symbolPackageUpdateResource = await CommandRunnerUtility.GetSymbolPackageUpdateResource(sourceProvider, source);
+                    if (symbolPackageUpdateResource != null)
+                    {
+                        symbolSource = symbolPackageUpdateResource.SourceUri.AbsoluteUri;
+                    }
+                }
+                else
+                {
+                    logger.LogWarning(string.Format(CultureInfo.CurrentCulture, Strings.Warning_FoundSymbols_SourceNotRecognizedAsV3, "push", packageSource.Source));
                 }
             }
 
